@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RelationType {
+  parent
+  child
+  spouse
+  sibling
+}
+
+model User {
+  id       Int       @id @default(autoincrement())
+  email    String    @unique
+  password String
+  trees    Tree[]
+  profile  UserProfile?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserProfile {
+  id        Int    @id @default(autoincrement())
+  userId    Int    @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String?
+  avatarUrl String?
+}
+
+model Tree {
+  id        Int       @id @default(autoincrement())
+  name      String
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  persons   Person[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Person {
+  id         Int            @id @default(autoincrement())
+  name       String
+  gender     String?
+  birthDate  DateTime?
+  photo      String?
+  notes      String?
+  treeId     Int
+  tree       Tree           @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  fromRelationships Relationship[] @relation("fromPerson")
+  toRelationships   Relationship[] @relation("toPerson")
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model Relationship {
+  id           Int          @id @default(autoincrement())
+  fromPersonId Int
+  toPersonId   Int
+  type         RelationType
+  fromPerson   Person       @relation("fromPerson", fields: [fromPersonId], references: [id], onDelete: Cascade)
+  toPerson     Person       @relation("toPerson", fields: [toPersonId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+
+  @@unique([fromPersonId, toPersonId, type])
+}

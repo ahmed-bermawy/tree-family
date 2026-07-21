@@ -63,8 +63,25 @@ Thumbs.db
 tmp/
 temp/
 
+# Sync scripts
+sync-to-host.sh
+sync-from-host.sh
+
 # Nest CLI cache
 .nestcli-cache
 
 # ESLint cache
 .eslintcache
+
+/generated/prisma
+
+# Prisma generated files
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
+prisma.config.ts
+
+# Sync scripts
+sync-to-host.sh
+sync-from-host.sh
