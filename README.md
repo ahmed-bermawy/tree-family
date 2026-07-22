@@ -1,98 +1,98 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Family Tree App
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A full-stack family tree management application built with **NestJS**, **Prisma**, and **PostgreSQL**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Live API
 
-## Description
+Base URL: `http://76.13.60.23:3000`
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📋 API Endpoints
 
-## Project setup
+### Auth
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/auth/register` | Register a new user | ❌ |
+| POST | `/auth/login` | Login and get JWT token | ❌ |
+| GET | `/auth/profile` | Get current user profile | ✅ JWT |
 
-```bash
-$ npm install
+### Trees
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/trees` | Create a family tree | ✅ |
+| GET | `/trees` | List user's trees | ✅ |
+| GET | `/trees/:id` | Get a tree by ID | ✅ |
+| PATCH | `/trees/:id` | Update a tree | ✅ |
+| DELETE | `/trees/:id` | Delete a tree | ✅ |
+| GET | `/trees/:id/graph` | Get tree graph (nodes + edges) | ✅ |
+
+### Persons
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/persons` | Create a person | ✅ |
+| GET | `/persons/tree/:treeId` | List persons in a tree | ✅ |
+| GET | `/persons/:id` | Get person by ID | ✅ |
+| PATCH | `/persons/:id` | Update a person | ✅ |
+| DELETE | `/persons/:id` | Delete a person | ✅ |
+
+### Relationships
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/relationships` | Create a relationship | ✅ |
+| DELETE | `/relationships/:id` | Delete a relationship | ✅ |
+
+## 📦 Tech Stack
+
+- **Runtime:** Node.js 22
+- **Framework:** NestJS 11 (TypeScript)
+- **ORM:** Prisma 5
+- **Database:** PostgreSQL 16
+- **Auth:** JWT (JSON Web Tokens)
+- **Validation:** class-validator + class-transformer
+- **Process Manager:** PM2
+- **Server:** Ubuntu VPS
+
+## 🧠 Business Rules
+
+- A person belongs to exactly one tree
+- Relationships must be within the same tree
+- No circular parent-child relationships (cycle detection via BFS)
+- A person cannot be their own parent/child/spouse
+- Duplicate relationships are prevented
+
+## 🏗️ Project Structure
+
+```
+src/
+├── auth/           # Auth module (register, login, JWT)
+│   ├── dto/
+│   ├── guards/
+│   └── strategies/
+├── common/         # Shared decorators
+├── persons/        # Person CRUD
+│   └── dto/
+├── prisma/         # Prisma service
+├── relationships/  # Relationship management
+│   └── dto/
+├── trees/          # Tree CRUD + graph
+│   └── dto/
+├── app.module.ts
+└── main.ts
 ```
 
-## Compile and run the project
+## 🛠️ Getting Started
 
 ```bash
-# development
-$ npm run start
+# Clone
+git clone https://github.com/ahmed-bermawy/tree-family.git
+cd tree-family
 
-# watch mode
-$ npm run start:dev
+# Install
+npm install
 
-# production mode
-$ npm run start:prod
+# Set up .env
+echo 'DATABASE_URL="postgresql://user:password@localhost:5432/family_tree_db?schema=public"' > .env
+
+# Build & run
+npm run build
+npm run start:prod
 ```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

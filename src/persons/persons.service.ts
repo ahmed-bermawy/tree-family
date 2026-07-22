@@ -13,7 +13,7 @@ export class PersonsService {
   }
 
   async create(dto: CreatePersonDto, userId: number) {
-    const treeId = dto.treeId!;
+    const treeId = dto.treeId;
     await this.verifyTreeOwnership(treeId, userId);
     return this.prisma.person.create({
       data: {

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsInt } from 'class-validator';
 
 export class CreatePersonDto {
   @IsString()
@@ -20,8 +20,8 @@ export class CreatePersonDto {
   @IsString()
   notes?: string;
 
-  @IsOptional()
-  treeId?: number;
+  @IsInt()
+  treeId: number;
 }
 
 export class UpdatePersonDto {
