@@ -32,7 +32,7 @@ export class UploadController {
           cb(null, unique + extname(file.originalname));
         },
       }),
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB (cropped before upload)
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/^image\/(jpeg|png|webp|gif)$/)) {
           cb(new BadRequestException('Only images allowed (jpg, png, webp, gif)'), false);
