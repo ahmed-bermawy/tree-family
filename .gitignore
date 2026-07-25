@@ -74,4 +74,3 @@ sync-from-host.sh
 .eslintcache
 
 /generated/prisma
-uploads/

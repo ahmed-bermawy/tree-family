@@ -3,10 +3,14 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { MailService } from '../mail/mail.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private mailService: MailService,
+  ) {}
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -25,11 +29,22 @@ export class AuthController {
   }
 
   @Post('forgot-password')
-  forgotPassword(
+  async forgotPassword(
     @Body('email') email: string,
     @Headers('accept-language') lang?: string,
   ) {
-    return this.authService.forgotPassword(email, lang);
+    const result = await this.authService.forgotPassword(email, lang);
+    if (result.resetLink) {
+      await this.mailService.sendPasswordReset(email, result.resetLink, lang)
+        .catch((err) => console.error('Email send failed:', err.message));
+    }
+    return result;
+  }
+
+  @Post('test-email')
+  async testEmail(@Body('email') email: string) {
+    await this.mailService.test(email);
+    return { sent: true };
   }
 
   @Post('reset-password/:token')
