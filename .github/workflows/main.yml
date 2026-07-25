@@ -29,10 +29,22 @@ jobs:
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: -avzr --delete --exclude=node_modules --exclude=.env --exclude=.git
+          switches: -avzr --delete --exclude=node_modules --exclude=.env --exclude=.git --exclude=uploads
           path: ./*
-          remote_user: ${{ secrets.FT_API_USER }}
-          remote_host: ${{ secrets.FT_API_HOST }}
-          remote_port: ${{ secrets.FT_API_PORT }}
-          remote_key: ${{ secrets.FT_API_SSH_KEY }}
-          remote_path: ${{ secrets.FT_API_PATH }}
+          remote_user: ${{ secrets.PROD_USER }}
+          remote_host: ${{ secrets.PROD_HOST }}
+          remote_port: ${{ secrets.PROD_PORT }}
+          remote_key: ${{ secrets.PROD_SSH_KEY }}
+          remote_path: ${{ secrets.PROD_API_PATH }}
+
+      - name: Post-deploy (install & restart)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          port: ${{ secrets.PROD_PORT }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd ${{ secrets.PROD_API_PATH }}
+            npm install --production 2>&1 | tail -2
+            pm2 restart family-tree-api-prod --update-env
