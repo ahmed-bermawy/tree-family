@@ -11,8 +11,8 @@ export class MailService {
       port: 465,
       secure: true,
       auth: {
-        user: 'no-reply@bermawy.info',
-        pass: 'j8fy-nkb9-qfed-aanc',
+        user: 'ahmed@bermawy.tech',
+        pass: '0tvx-lmjs-n2kr-ltyw',
       },
     });
   }
@@ -23,7 +23,7 @@ export class MailService {
     const html = isAr ? this.arTemplate(resetLink) : this.enTemplate(resetLink);
 
     return this.transporter.sendMail({
-      from: '"Family Tree" <no-reply@bermawy.info>',
+      from: '"Family Tree" <ahmed@bermawy.tech>',
       to: email,
       subject,
       html,
@@ -56,7 +56,7 @@ export class MailService {
 
   async test(email: string) {
     return this.transporter.sendMail({
-      from: '"Family Tree" <no-reply@bermawy.info>',
+      from: '"Family Tree" <ahmed@bermawy.tech>',
       to: email,
       subject: '✅ Test Email from Family Tree',
       html: '<h2>Test successful!</h2><p>Your email configuration is working.</p>',
