@@ -7,14 +7,18 @@ export class MailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
-      port: 465,
-      secure: true,
+      host: process.env.MAIL_HOST || 'smtp.hostinger.com',
+      port: Number(process.env.MAIL_PORT) || 465,
+      secure: process.env.MAIL_SECURE !== 'false',
       auth: {
-        user: 'ahmed@bermawy.tech',
-        pass: '0tvx-lmjs-n2kr-ltyw',
+        user: process.env.MAIL_USER || '',
+        pass: process.env.MAIL_PASS || '',
       },
     });
+  }
+
+  private get fromAddress() {
+    return process.env.MAIL_FROM || '"Family Tree" <noreply@bermawy.tech>';
   }
 
   async sendPasswordReset(email: string, resetLink: string, lang?: string) {
@@ -23,7 +27,7 @@ export class MailService {
     const html = isAr ? this.arTemplate(resetLink) : this.enTemplate(resetLink);
 
     return this.transporter.sendMail({
-      from: '"Family Tree" <ahmed@bermawy.tech>',
+      from: this.fromAddress,
       to: email,
       subject,
       html,
@@ -56,7 +60,7 @@ export class MailService {
 
   async test(email: string) {
     return this.transporter.sendMail({
-      from: '"Family Tree" <ahmed@bermawy.tech>',
+      from: this.fromAddress,
       to: email,
       subject: '✅ Test Email from Family Tree',
       html: '<h2>Test successful!</h2><p>Your email configuration is working.</p>',
