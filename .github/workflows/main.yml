@@ -1,0 +1,52 @@
+name: CI/CD - Backend API
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy via rsync
+        uses: burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avzr --delete
+          path: ./*
+          remote_user: ${{ secrets.FT_API_USER }}
+          remote_host: ${{ secrets.FT_API_HOST }}
+          remote_port: ${{ secrets.FT_API_PORT }}
+          remote_key: ${{ secrets.FT_API_SSH_KEY }}
+          remote_path: ${{ secrets.FT_API_PATH }}
+
+      - name: Post-deploy (install & restart)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FT_API_HOST }}
+          username: ${{ secrets.FT_API_USER }}
+          port: ${{ secrets.FT_API_PORT }}
+          key: ${{ secrets.FT_API_SSH_KEY }}
+          script: |
+            cd ${{ secrets.FT_API_PATH }}
+            npm install --production
+            npx prisma generate
+            npm run build
+            pm2 restart family-tree-app --update-env || pm2 start dist/main.js --name family-tree-app
