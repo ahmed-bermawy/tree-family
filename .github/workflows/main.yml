@@ -29,24 +29,10 @@ jobs:
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: -avzr --delete
+          switches: -avzr --delete --exclude=node_modules --exclude=.env --exclude=.git
           path: ./*
           remote_user: ${{ secrets.FT_API_USER }}
           remote_host: ${{ secrets.FT_API_HOST }}
           remote_port: ${{ secrets.FT_API_PORT }}
           remote_key: ${{ secrets.FT_API_SSH_KEY }}
           remote_path: ${{ secrets.FT_API_PATH }}
-
-      - name: Post-deploy (install & restart)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.FT_API_HOST }}
-          username: ${{ secrets.FT_API_USER }}
-          port: ${{ secrets.FT_API_PORT }}
-          key: ${{ secrets.FT_API_SSH_KEY }}
-          script: |
-            cd ${{ secrets.FT_API_PATH }}
-            npm install --production
-            npx prisma generate
-            npm run build
-            pm2 restart family-tree-app --update-env || pm2 start dist/main.js --name family-tree-app
