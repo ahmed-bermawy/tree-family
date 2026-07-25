@@ -56,7 +56,7 @@ export class AuthService {
       data: { passwordResetToken: token, passwordResetExpires: expires },
     });
 
-    const baseUrl = process.env.FRONTEND_URL || 'http://76.13.60.23:5173';
+    const baseUrl = process.env.FRONTEND_URL || 'https://family-tree.bermawy.tech';
     const resetLink = `${baseUrl}/reset-password/${token}`;
 
     return {
