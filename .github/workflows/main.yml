@@ -47,4 +47,5 @@ jobs:
           script: |
             cd ${{ secrets.PROD_API_PATH }}
             npm install --production 2>&1 | tail -2
+            npx prisma generate 2>&1 | tail -1
             pm2 restart family-tree-api-prod --update-env
