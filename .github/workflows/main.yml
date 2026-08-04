@@ -19,9 +19,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          # Source-only payload (~500KB): no node_modules, no dist, no .git, no .env, no uploads
-          for i in 1 2 3 4 5; do
-            echo "--- rsync attempt $i/5 ---"
+          # Retry with backoff: GitHub runner IPs occasionally get dropped by provider network
+          for i in 1 2 3 4 5 6 7 8; do
+            echo "--- rsync attempt $i/8 ---"
             if rsync -avz --delete \
               --exclude=node_modules --exclude=dist --exclude=.git --exclude=.env \
               --exclude=uploads --exclude=generated --exclude=*.tsbuildinfo \
@@ -30,10 +30,10 @@ jobs:
               echo "rsync OK"
               exit 0
             fi
-            echo "rsync failed, retrying in 10s..."
-            sleep 10
+            echo "rsync failed, retrying in $((i * 10))s..."
+            sleep $((i * 10))
           done
-          echo "rsync failed after 5 attempts"
+          echo "rsync failed after 8 attempts"
           exit 1
 
       - name: Build & restart on server
