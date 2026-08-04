@@ -18,8 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Admins: create/update/delete admins, change passwords
   - Analytics: total views, daily views, top pages, unique visitors
   - Feedback: list (filter by status), update priority/status, delete
-- 👁️ Public `POST /track` endpoint for page-view tracking
-- 💬 Public `POST /feedback` endpoint — saves to DB + emails ahmed@bermawy.tech
+- 💬 Public `POST /feedback` endpoint
 - 🔒 Role-based access (USER/ADMIN) with AdminGuard
 - 🗄️ Separate staging and production databases
 
@@ -27,7 +26,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `role` column on User (default USER)
 - UserProfile created automatically at registration when name provided
 - JWT payload includes `name` and `avatarUrl` from profile
-
-### Fixed
-- Email credentials moved from hardcoded to `.env`
-- Uploaded files removed from git tracking (`uploads/` gitignored)
