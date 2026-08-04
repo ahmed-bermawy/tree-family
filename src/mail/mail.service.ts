@@ -66,4 +66,46 @@ export class MailService {
       html: '<h2>Test successful!</h2><p>Your email configuration is working.</p>',
     });
   }
+
+  async sendFeedback(data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    imagePath?: string;
+    imageName?: string;
+  }) {
+    const html = `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#111;border-radius:12px;color:#eee;border:1px solid #333">
+        <div style="text-align:center;font-size:32px;margin-bottom:12px">💬</div>
+        <h2 style="text-align:center;color:#fff;margin:0 0 16px">New Feedback</h2>
+        <table style="width:100%;font-size:14px;border-collapse:collapse">
+          <tr><td style="padding:6px 0;color:#999;width:90px"><strong>Name</strong></td><td style="padding:6px 0;color:#fff">${this.escapeHtml(data.name)}</td></tr>
+          <tr><td style="padding:6px 0;color:#999"><strong>Email</strong></td><td style="padding:6px 0;color:#34d399">${this.escapeHtml(data.email)}</td></tr>
+          <tr><td style="padding:6px 0;color:#999"><strong>Subject</strong></td><td style="padding:6px 0;color:#fff">${this.escapeHtml(data.subject)}</td></tr>
+        </table>
+        <div style="margin-top:16px;padding:14px;background:#1a1a1a;border-radius:8px;border:1px solid #333;white-space:pre-wrap;color:#ddd;font-size:14px">${this.escapeHtml(data.message)}</div>
+        <p style="text-align:center;color:#555;font-size:11px;margin-top:20px">Sent via the Family Tree feedback form</p>
+      </div>`;
+
+    return this.transporter.sendMail({
+      from: this.fromAddress,
+      to: process.env.FEEDBACK_EMAIL || 'ahmed@bermawy.tech',
+      replyTo: data.email,
+      subject: `💬 Feedback: ${data.subject.slice(0, 80)}`,
+      html,
+      attachments: data.imagePath
+        ? [{ filename: data.imageName || 'feedback-image', path: data.imagePath }]
+        : [],
+    });
+  }
+
+  private escapeHtml(text: string): string {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 }

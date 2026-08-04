@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users — Family Tree Admin</title>
+  <link rel="stylesheet" href="/dashboard/assets/dashboard.css?v=11">
+</head>
+<body>
+  <div class="navbar">
+    <div class="brand">🌳 Family Tree Admin</div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <nav>
+      <a href="/dashboard" data-page="overview">Overview</a>
+      <a href="/dashboard/users.html" data-page="users">Users</a>
+      <a href="/dashboard/admins.html" data-page="admins">Admins</a>
+      <a href="/dashboard/analytics.html" data-page="analytics">Analytics</a>
+      <a href="/dashboard/feedback.html" data-page="feedback">Feedback</a>
+      <a href="#" class="nav-logout" onclick="logout(); return false;">Logout</a>
+    </nav>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div id="loading" class="loading">Loading...</div>
+
+    <div id="content" style="display:none">
+      <div class="table-card">
+        <h3>👥 All Registered Users (<span id="totalUsers">—</span>)</h3>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Email</th><th>Name</th><th>Trees</th><th>Role</th><th>Registered</th></tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+        <div class="pagination">
+          <button id="prevBtn" onclick="changePage(-1)">← Prev</button>
+          <span id="pageInfo">Page 1</span>
+          <button id="nextBtn" onclick="changePage(1)">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/dashboard/assets/dashboard.js?v=7"></script>
+  <script>
+  requireAuth();
+  setActiveNav('users');
+
+  let currentPage = 1;
+  const limit = 20;
+
+  async function loadUsers(page) {
+    const data = await API.get('/users?page=' + page + '&limit=' + limit);
+
+    document.getElementById('totalUsers').textContent = data.total;
+    document.getElementById('pageInfo').textContent = 'Page ' + data.page + ' of ' + (data.totalPages || 1);
+    document.getElementById('prevBtn').disabled = page <= 1;
+    document.getElementById('nextBtn').disabled = page >= data.totalPages;
+
+    const rows = data.users.map((u) => `
+      <tr>
+        <td>${u.id}</td>
+        <td>${u.email}</td>
+        <td>${u.profile?.name || '—'}</td>
+        <td>${u._count.trees}</td>
+        <td><span class="badge ${u.role === 'ADMIN' ? 'admin' : 'user'}">${u.role}</span></td>
+        <td>${new Date(u.createdAt).toLocaleString()}</td>
+      </tr>`).join('');
+    document.getElementById('usersTable').innerHTML = rows;
+  }
+
+  function changePage(delta) {
+    currentPage = Math.max(1, currentPage + delta);
+    loadUsers(currentPage);
+  }
+
+  (async () => {
+    try {
+      await loadUsers(1);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    } catch (ex) {
+      document.getElementById('loading').textContent = 'Failed to load users';
+    }
+  })();
+  </script>
+</body>
+</html>

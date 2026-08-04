@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Family Tree</title>
+  <link rel="stylesheet" href="/dashboard/assets/dashboard.css?v=11">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1>🌳 Admin Dashboard</h1>
+      <p>Sign in with an admin account</p>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required autocomplete="username">
+        <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit">Sign In</button>
+        <div class="login-error" id="error"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('error');
+    err.textContent = 'Signing in...';
+    try {
+      const data = await API.login(
+        document.getElementById('email').value.trim(),
+        document.getElementById('password').value
+      );
+      localStorage.setItem('ft_token', data.access_token || data.token);
+      window.location.href = '/dashboard';
+    } catch (ex) {
+      err.textContent = 'Invalid email or password. Admin access only.';
+    }
+  });
+  </script>
+  <script src="/dashboard/assets/dashboard.js?v=7"></script>
+</body>
+</html>

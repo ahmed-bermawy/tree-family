@@ -14,16 +14,64 @@ enum RelationType {
   sibling
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum FeedbackPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum FeedbackStatus {
+  NEW
+  DONE
+  ARCHIVED
+}
+
+model Feedback {
+  id        Int              @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  message   String
+  imageUrl  String?
+  priority  FeedbackPriority @default(MEDIUM)
+  status    FeedbackStatus   @default(NEW)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
 model User {
   id              Int            @id @default(autoincrement())
   email           String         @unique
   password        String
+  role            UserRole       @default(USER)
   passwordResetToken String?
   passwordResetExpires DateTime?
   trees           Tree[]
   profile         UserProfile?
+  pageViews       PageView[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+}
+
+model PageView {
+  id        Int      @id @default(autoincrement())
+  path      String
+  referrer  String?
+  userAgent String?
+  ipHash    String?
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model UserProfile {

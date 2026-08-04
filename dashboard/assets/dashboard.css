@@ -1,0 +1,160 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+/* Login */
+.login-wrap {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 20px;
+}
+.login-card {
+  background: #1e293b; border-radius: 16px; padding: 40px;
+  width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.login-card h1 { font-size: 1.5rem; margin-bottom: 8px; text-align: center; }
+.login-card p { color: #94a3b8; text-align: center; margin-bottom: 24px; font-size: .9rem; }
+.login-card input {
+  width: 100%; padding: 12px 14px; margin-bottom: 12px;
+  background: #0f172a; border: 1px solid #334155; border-radius: 10px;
+  color: #e2e8f0; font-size: .95rem; outline: none;
+}
+.login-card input:focus { border-color: #22c55e; }
+.login-card button {
+  width: 100%; padding: 12px; background: #22c55e; color: #052e16;
+  border: none; border-radius: 10px; font-size: 1rem; font-weight: 600;
+  cursor: pointer; transition: background .2s;
+}
+.login-card button:hover { background: #16a34a; }
+.login-error { color: #f87171; font-size: .85rem; text-align: center; margin-top: 12px; min-height: 20px; }
+
+/* Layout */
+.navbar {
+  background: #1e293b; border-bottom: 1px solid #334155;
+  padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
+  height: 60px; position: sticky; top: 0; z-index: 10;
+}
+.navbar .brand { font-weight: 700; font-size: 1.1rem; color: #22c55e; }
+.navbar nav { display: flex; gap: 4px; }
+.navbar nav a {
+  color: #94a3b8; text-decoration: none; padding: 8px 16px;
+  border-radius: 8px; font-size: .9rem; transition: all .2s;
+}
+.navbar nav a:hover { color: #e2e8f0; background: #0f172a; }
+.navbar nav a.active { color: #22c55e; background: rgba(34,197,94,.1); }
+.navbar .logout {
+  background: none; border: 1px solid #334155; color: #94a3b8;
+  padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: .85rem;
+}
+.navbar .logout:hover { color: #f87171; border-color: #f87171; }
+
+/* Hamburger */
+.menu-toggle {
+  display: none; background: none; border: none; color: #e2e8f0;
+  font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1;
+}
+
+/* Logout link inside nav - mobile only */
+.nav-logout { display: none; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+/* Stat cards */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+.stat-card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+  padding: 20px; transition: transform .2s;
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card .label { color: #94a3b8; font-size: .85rem; margin-bottom: 8px; }
+.stat-card .value { font-size: 2rem; font-weight: 700; color: #22c55e; }
+.stat-card .sub { color: #64748b; font-size: .8rem; margin-top: 6px; }
+
+/* Charts */
+.charts-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+.chart-card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 20px;
+}
+.chart-card h3 { font-size: 1rem; margin-bottom: 16px; color: #e2e8f0; }
+.chart-wrap { position: relative; width: 100%; height: 280px; overflow: hidden; }
+
+/* Recent users table */
+.table-card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 20px;
+}
+.table-card h3 { font-size: 1rem; margin-bottom: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 12px 14px; font-size: .9rem; border-bottom: 1px solid #1e293b; }
+th { color: #94a3b8; font-weight: 500; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+td { border-bottom: 1px solid #1e293b; }
+tr:last-child td { border-bottom: none; }
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: .75rem; font-weight: 600;
+}
+.badge.admin { background: rgba(34,197,94,.15); color: #22c55e; }
+.badge.user { background: rgba(100,116,139,.2); color: #94a3b8; }
+
+/* Pagination */
+.pagination { display: flex; gap: 8px; align-items: center; margin-top: 16px; justify-content: center; }
+.pagination button {
+  background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: .85rem;
+}
+.pagination button:hover:not(:disabled) { border-color: #22c55e; color: #22c55e; }
+.pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.pagination span { color: #94a3b8; font-size: .85rem; }
+
+.loading { text-align: center; color: #64748b; padding: 40px; }
+.error-box { color: #f87171; text-align: center; padding: 20px; }
+
+/* ===== Mobile Responsive (must stay at END so it overrides base rules) ===== */
+@media (max-width: 768px) {
+  html, body { overflow-x: hidden; max-width: 100%; }
+
+  .navbar {
+    padding: 0 12px; height: auto; min-height: 56px; flex-wrap: wrap;
+  }
+  .navbar .brand {
+    font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex-shrink: 1; min-width: 0;
+  }
+  .menu-toggle {
+    display: block; margin-left: auto; margin-right: 6px; flex-shrink: 0;
+  }
+  .navbar .logout { display: none; }
+
+  .navbar nav {
+    display: none; width: 100%; flex-direction: column;
+    order: 3; padding: 6px 0 12px; border-top: 1px solid #334155; margin-top: 6px;
+  }
+  .navbar nav.open { display: flex; }
+  .navbar nav a { padding: 12px; border-radius: 8px; font-size: .95rem; }
+  .navbar .nav-logout { display: block; color: #f87171; }
+  .navbar .nav-logout:hover { background: rgba(248,113,113,.1); color: #f87171; }
+
+  .container { padding: 16px; }
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-card .value { font-size: 1.5rem; }
+  .charts-grid { grid-template-columns: 1fr; gap: 12px; width: 100%; }
+  .chart-card { min-width: 0; max-width: 100%; padding: 14px; }
+  .chart-wrap { height: 200px; overflow: hidden; }
+  .stat-card { min-width: 0; }
+
+  /* Horizontal scroll inside table card only */
+  .table-card { overflow-x: auto; padding: 14px; }
+  table { min-width: 520px; }
+
+  .modal { max-width: 92%; margin: 0 4%; }
+}

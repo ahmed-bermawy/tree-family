@@ -9,6 +9,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
   app.enableCors();
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+  app.useStaticAssets(join(process.cwd(), 'dashboard'), { prefix: '/dashboard' });
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();

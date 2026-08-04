@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — Family Tree Admin</title>
+  <link rel="stylesheet" href="/dashboard/assets/dashboard.css?v=11">
+</head>
+<body>
+  <div class="navbar">
+    <div class="brand">🌳 Family Tree Admin</div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <nav>
+      <a href="/dashboard" data-page="overview">Overview</a>
+      <a href="/dashboard/users.html" data-page="users">Users</a>
+      <a href="/dashboard/admins.html" data-page="admins">Admins</a>
+      <a href="/dashboard/analytics.html" data-page="analytics">Analytics</a>
+      <a href="/dashboard/feedback.html" data-page="feedback">Feedback</a>
+      <a href="#" class="nav-logout" onclick="logout(); return false;">Logout</a>
+    </nav>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div id="loading" class="loading">Loading...</div>
+
+    <div id="content" style="display:none">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">👁️ Total Views</div>
+          <div class="value" id="statTotal">—</div>
+          <div class="sub">all time</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">📈 Views Today</div>
+          <div class="value" id="statToday">—</div>
+          <div class="sub" id="subToday"></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">🗓️ Last 7 Days</div>
+          <div class="value" id="stat7d">—</div>
+          <div class="sub" id="sub7d"></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">👤 Unique Visitors</div>
+          <div class="value" id="statUnique">—</div>
+          <div class="sub">by IP (30 days)</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Daily Views (30 days)</h3>
+          <div class="chart-wrap"><canvas id="chartViews"></canvas></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h3>🔥 Top Pages</h3>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Page</th><th>Views</th></tr>
+          </thead>
+          <tbody id="pagesTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="/dashboard/assets/dashboard.js?v=8"></script>
+  <script>
+  requireAuth();
+  setActiveNav('analytics');
+
+  async function load() {
+    try {
+      const [overview, daily, pages] = await Promise.all([
+        API.get('/analytics'),
+        API.get('/analytics/daily?days=30'),
+        API.get('/analytics/pages?limit=10'),
+      ]);
+
+      document.getElementById('statTotal').textContent = overview.totalViews;
+      document.getElementById('statToday').textContent = overview.viewsToday;
+      document.getElementById('subToday').textContent = 'last 24h';
+      document.getElementById('stat7d').textContent = overview.views7d;
+      document.getElementById('sub7d').textContent = 'last 7 days';
+      document.getElementById('statUnique').textContent = overview.uniqueVisitors;
+
+      const rows = pages.map((p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td style="font-family:monospace">${p.path}</td>
+          <td>${p.views}</td>
+        </tr>`).join('');
+      document.getElementById('pagesTable').innerHTML = rows || '<tr><td colspan="3" style="text-align:center;color:#64748b">No views yet</td></tr>';
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+
+      drawChart('chartViews', daily.map(d => d.date.slice(5)), daily.map(d => d.count), '#22c55e');
+    } catch (ex) {
+      document.getElementById('loading').textContent = 'Failed to load analytics';
+    }
+  }
+
+  function drawChart(id, labels, values, color) {
+    const ctx = document.getElementById(id);
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ data: values, backgroundColor: color + '88', borderColor: color, borderWidth: 1, borderRadius: 3 }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#94a3b8', maxTicksLimit: 8, maxRotation: 0, autoSkip: true }, grid: { color: '#1e293b' } },
+          y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#1e293b' } },
+        },
+      },
+    });
+    setTimeout(() => chart.resize(), 100);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  load();
+  </script>
+</body>
+</html>

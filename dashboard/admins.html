@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admins — Family Tree Admin</title>
+  <link rel="stylesheet" href="/dashboard/assets/dashboard.css?v=11">
+  <style>
+    .btn {
+      background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+      padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: .8rem;
+    }
+    .btn:hover { border-color: #22c55e; color: #22c55e; }
+    .btn.green { background: #22c55e; color: #052e16; border: none; font-weight: 600; }
+    .btn.green:hover { background: #16a34a; }
+    .btn.red:hover { border-color: #f87171; color: #f87171; }
+    .actions { display: flex; gap: 6px; }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      align-items: center; justify-content: center; z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+      padding: 24px; width: 100%; max-width: 420px;
+    }
+    .modal h3 { margin-bottom: 16px; }
+    .modal input {
+      width: 100%; padding: 10px 12px; margin-bottom: 12px;
+      background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+      color: #e2e8f0; font-size: .9rem; outline: none;
+    }
+    .modal input:focus { border-color: #22c55e; }
+    .modal .row { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal .msg { color: #22c55e; font-size: .85rem; margin-bottom: 8px; min-height: 18px; }
+    .modal .msg.err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="brand">🌳 Family Tree Admin</div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <nav>
+      <a href="/dashboard" data-page="overview">Overview</a>
+      <a href="/dashboard/users.html" data-page="users">Users</a>
+      <a href="/dashboard/admins.html" data-page="admins">Admins</a>
+      <a href="/dashboard/analytics.html" data-page="analytics">Analytics</a>
+      <a href="/dashboard/feedback.html" data-page="feedback">Feedback</a>
+      <a href="#" class="nav-logout" onclick="logout(); return false;">Logout</a>
+    </nav>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div id="loading" class="loading">Loading...</div>
+
+    <div id="content" style="display:none">
+      <div class="table-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3>👑 Admins</h3>
+          <button class="btn green" onclick="openAddModal()">+ Add Admin</button>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Email</th><th>Name</th><th>Role</th><th>Created</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="adminsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Admin Modal -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <h3>➕ Add Admin</h3>
+      <div class="msg" id="addMsg"></div>
+      <input type="email" id="addEmail" placeholder="Email" required>
+      <input type="password" id="addPassword" placeholder="Password (min 6 chars)" required>
+      <input type="text" id="addName" placeholder="Full name (optional)">
+      <div class="row">
+        <button class="btn" onclick="closeModal('addModal')">Cancel</button>
+        <button class="btn green" onclick="createAdmin()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Admin Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3>✏️ Edit Admin</h3>
+      <div class="msg" id="editMsg"></div>
+      <input type="email" id="editEmail" placeholder="Email">
+      <input type="text" id="editName" placeholder="Full name">
+      <div class="row">
+        <button class="btn" onclick="closeModal('editModal')">Cancel</button>
+        <button class="btn green" onclick="saveAdmin()">Save</button>
+      </div>
+      <hr style="border-color:#334155;margin:16px 0">
+      <h3 style="font-size:.95rem">🔑 Change Password</h3>
+      <div class="msg" id="pwdMsg"></div>
+      <input type="password" id="newPassword" placeholder="New password (min 6 chars)">
+      <div class="row">
+        <button class="btn green" onclick="savePassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/dashboard/assets/dashboard.js?v=8"></script>
+  <script>
+  requireAuth();
+  setActiveNav('admins');
+
+  let editingId = null;
+  let adminsCache = [];
+
+  async function loadAdmins() {
+    const data = await API.get('/admins');
+    adminsCache = data;
+    document.getElementById('adminsTable').innerHTML = data.map((a) => `
+      <tr>
+        <td>${a.email}</td>
+        <td>${a.profile?.name || '—'}</td>
+        <td><span class="badge admin">ADMIN</span></td>
+        <td>${new Date(a.createdAt).toLocaleDateString()}</td>
+        <td><div class="actions">
+          <button class="btn" onclick="openEditModal(${a.id})">✏️ Edit</button>
+          <button class="btn red" onclick="deleteAdmin(${a.id})">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  function openAddModal() {
+    document.getElementById('addMsg').textContent = '';
+    document.getElementById('addEmail').value = '';
+    document.getElementById('addPassword').value = '';
+    document.getElementById('addName').value = '';
+    document.getElementById('addModal').classList.add('open');
+  }
+
+  async function createAdmin() {
+    const msg = document.getElementById('addMsg');
+    msg.textContent = 'Creating...';
+    try {
+      await API.post('/admins', {
+        email: document.getElementById('addEmail').value.trim(),
+        password: document.getElementById('addPassword').value,
+        name: document.getElementById('addName').value.trim() || undefined,
+      });
+      msg.textContent = '✅ Admin created';
+      setTimeout(() => { closeModal('addModal'); loadAdmins(); }, 500);
+    } catch (ex) {
+      msg.className = 'msg err';
+      msg.textContent = ex.message || 'Failed';
+    }
+  }
+
+  function openEditModal(id) {
+    editingId = id;
+    document.getElementById('editMsg').textContent = '';
+    document.getElementById('pwdMsg').textContent = '';
+    document.getElementById('newPassword').value = '';
+
+    const admin = adminsCache.find((a) => a.id === id);
+    if (admin) {
+      document.getElementById('editEmail').value = admin.email || '';
+      document.getElementById('editName').value = admin.profile?.name || '';
+    } else {
+      document.getElementById('editEmail').value = '';
+      document.getElementById('editName').value = '';
+    }
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  async function saveAdmin() {
+    const msg = document.getElementById('editMsg');
+    msg.textContent = 'Saving...';
+    try {
+      await API.patch('/admins/' + editingId, {
+        email: document.getElementById('editEmail').value.trim(),
+        name: document.getElementById('editName').value.trim(),
+      });
+      msg.textContent = '✅ Saved';
+      setTimeout(() => { closeModal('editModal'); loadAdmins(); }, 500);
+    } catch (ex) {
+      msg.className = 'msg err';
+      msg.textContent = ex.message || 'Failed';
+    }
+  }
+
+  async function savePassword() {
+    const msg = document.getElementById('pwdMsg');
+    msg.textContent = 'Updating...';
+    try {
+      await API.patch('/admins/' + editingId + '/password', {
+        password: document.getElementById('newPassword').value,
+      });
+      msg.textContent = '✅ Password updated';
+      document.getElementById('newPassword').value = '';
+    } catch (ex) {
+      msg.className = 'msg err';
+      msg.textContent = ex.message || 'Failed';
+    }
+  }
+
+  async function deleteAdmin(id) {
+    if (!confirm('Delete this admin? (You cannot delete yourself)')) return;
+    try {
+      await API.del('/admins/' + id);
+      loadAdmins();
+    } catch (ex) {
+      alert(ex.message || 'Failed');
+    }
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  (async () => {
+    try {
+      await loadAdmins();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    } catch (ex) {
+      document.getElementById('loading').textContent = 'Failed to load admins';
+    }
+  })();
+  </script>
+</body>
+</html>

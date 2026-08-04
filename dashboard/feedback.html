@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback — Family Tree Admin</title>
+  <link rel="stylesheet" href="/dashboard/assets/dashboard.css?v=11">
+  <style>
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab {
+      background: #0f172a; border: 1px solid #334155; color: #94a3b8;
+      padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: .85rem; font-weight: 500;
+    }
+    .tab.active { background: #22c55e; border-color: #22c55e; color: #052e16; }
+    .btn {
+      background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+      padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: .75rem;
+    }
+    .btn:hover { border-color: #22c55e; color: #22c55e; }
+    .btn.red:hover { border-color: #f87171; color: #f87171; }
+    .fb-card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+      padding: 18px; margin-bottom: 14px;
+    }
+    .fb-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .fb-subject { color: #fff; font-weight: 600; font-size: 1rem; }
+    .fb-meta { color: #94a3b8; font-size: .8rem; margin-top: 4px; }
+    .fb-message { color: #cbd5e1; font-size: .9rem; margin-top: 10px; white-space: pre-wrap; }
+    .fb-img { margin-top: 12px; }
+    .fb-img img { max-height: 140px; border-radius: 8px; border: 1px solid #334155; cursor: zoom-in; }
+    .fb-actions { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: .7rem; font-weight: 600; }
+    .pill.high { background: rgba(248,113,113,.15); color: #f87171; }
+    .pill.medium { background: rgba(251,191,36,.15); color: #fbbf24; }
+    .pill.low { background: rgba(100,116,139,.2); color: #94a3b8; }
+    .pill.new { background: rgba(34,197,94,.15); color: #22c55e; }
+    .pill.done { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .pill.archived { background: rgba(100,116,139,.2); color: #64748b; }
+    select {
+      background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+      padding: 5px 8px; border-radius: 8px; font-size: .75rem; outline: none;
+    }
+    .empty { text-align: center; color: #64748b; padding: 40px; }
+    .lightbox {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+      align-items: center; justify-content: center; z-index: 200; cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 92%; max-height: 92%; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="brand">🌳 Family Tree Admin</div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <nav>
+      <a href="/dashboard" data-page="overview">Overview</a>
+      <a href="/dashboard/users.html" data-page="users">Users</a>
+      <a href="/dashboard/admins.html" data-page="admins">Admins</a>
+      <a href="/dashboard/analytics.html" data-page="analytics">Analytics</a>
+      <a href="/dashboard/feedback.html" data-page="feedback">Feedback</a>
+      <a href="#" class="nav-logout" onclick="logout(); return false;">Logout</a>
+    </nav>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div id="loading" class="loading">Loading...</div>
+
+    <div id="content" style="display:none">
+      <div class="tabs">
+        <button class="tab active" data-status="" onclick="setTab(this, '')">🆕 All</button>
+        <button class="tab" data-status="NEW" onclick="setTab(this, 'NEW')">🟢 New</button>
+        <button class="tab" data-status="DONE" onclick="setTab(this, 'DONE')">🔵 Done</button>
+        <button class="tab" data-status="ARCHIVED" onclick="setTab(this, 'ARCHIVED')">📦 Archived</button>
+      </div>
+      <div id="feedbackList"></div>
+    </div>
+  </div>
+
+  <!-- Image lightbox -->
+  <div class="lightbox" id="lightbox" onclick="this.classList.remove('open')">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+
+  <script src="/dashboard/assets/dashboard.js?v=8"></script>
+  <script>
+  requireAuth();
+  setActiveNav('feedback');
+
+  let currentStatus = '';
+
+  function setTab(btn, status) {
+    currentStatus = status;
+    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === btn));
+    loadFeedback();
+  }
+
+  async function loadFeedback() {
+    const q = currentStatus ? '?status=' + currentStatus : '';
+    const data = await API.get('/feedback' + q);
+    const list = document.getElementById('feedbackList');
+
+    if (!data.length) {
+      list.innerHTML = '<div class="empty">No feedback here 📭</div>';
+      return;
+    }
+
+    list.innerHTML = data.map((f) => `
+      <div class="fb-card">
+        <div class="fb-head">
+          <div>
+            <span class="fb-subject">${f.subject}</span>
+            <div class="fb-meta">
+              ${f.name} · ${f.email} · ${new Date(f.createdAt).toLocaleString()}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <span class="pill ${f.priority.toLowerCase()}">${f.priority}</span>
+            <span class="pill ${f.status.toLowerCase()}">${f.status}</span>
+          </div>
+        </div>
+        <div class="fb-message">${escapeHtml(f.message)}</div>
+        ${f.imageUrl ? `<div class="fb-img"><img src="${f.imageUrl}" onclick="openImage('${f.imageUrl}')" alt="attachment"></div>` : ''}
+        <div class="fb-actions">
+          <select onchange="updatePriority(${f.id}, this.value)">
+            <option value="LOW" ${f.priority === 'LOW' ? 'selected' : ''}>🟤 Low</option>
+            <option value="MEDIUM" ${f.priority === 'MEDIUM' ? 'selected' : ''}>🟡 Medium</option>
+            <option value="HIGH" ${f.priority === 'HIGH' ? 'selected' : ''}>🔴 High</option>
+          </select>
+          ${f.status !== 'DONE' ? `<button class="btn" onclick="setStatus(${f.id}, 'DONE')">✅ Mark Done</button>` : ''}
+          ${f.status !== 'ARCHIVED' ? `<button class="btn" onclick="setStatus(${f.id}, 'ARCHIVED')">📦 Archive</button>` : ''}
+          ${f.status === 'ARCHIVED' ? `<button class="btn" onclick="setStatus(${f.id}, 'NEW')">↩️ Unarchive</button>` : ''}
+          <button class="btn red" onclick="deleteFeedback(${f.id})">🗑️ Delete</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function updatePriority(id, priority) {
+    try {
+      await API.patch('/feedback/' + id, { priority });
+      loadFeedback();
+    } catch (ex) { alert(ex.message || 'Failed'); }
+  }
+
+  async function setStatus(id, status) {
+    try {
+      await API.patch('/feedback/' + id, { status });
+      loadFeedback();
+    } catch (ex) { alert(ex.message || 'Failed'); }
+  }
+
+  async function deleteFeedback(id) {
+    if (!confirm('Delete this feedback permanently?')) return;
+    try {
+      await API.del('/feedback/' + id);
+      loadFeedback();
+    } catch (ex) { alert(ex.message || 'Failed'); }
+  }
+
+  function openImage(url) {
+    document.getElementById('lightboxImg').src = url;
+    document.getElementById('lightbox').classList.add('open');
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  (async () => {
+    try {
+      await loadFeedback();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    } catch (ex) {
+      document.getElementById('loading').textContent = 'Failed to load feedback';
+    }
+  })();
+  </script>
+</body>
+</html>

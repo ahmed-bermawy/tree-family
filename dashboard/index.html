@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Family Tree</title>
+  <link rel="stylesheet" href="/dashboard/assets/dashboard.css?v=11">
+</head>
+<body>
+  <div class="navbar">
+    <div class="brand">🌳 Family Tree Admin</div>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <nav>
+      <a href="/dashboard" data-page="overview">Overview</a>
+      <a href="/dashboard/users.html" data-page="users">Users</a>
+      <a href="/dashboard/admins.html" data-page="admins">Admins</a>
+      <a href="/dashboard/analytics.html" data-page="analytics">Analytics</a>
+      <a href="/dashboard/feedback.html" data-page="feedback">Feedback</a>
+      <a href="#" class="nav-logout" onclick="logout(); return false;">Logout</a>
+    </nav>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div id="loading" class="loading">Loading...</div>
+
+    <div id="content" style="display:none">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">👥 Registered Users</div>
+          <div class="value" id="statUsers">—</div>
+          <div class="sub" id="subUsers"></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">🌳 Trees Created</div>
+          <div class="value" id="statTrees">—</div>
+          <div class="sub" id="subTrees"></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">✅ Users With Trees</div>
+          <div class="value" id="statUsersWithTrees">—</div>
+          <div class="sub">who built at least one tree</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>New User Registrations (30 days)</h3>
+          <div class="chart-wrap"><canvas id="chartUsers"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Trees Created (30 days)</h3>
+          <div class="chart-wrap"><canvas id="chartTrees"></canvas></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h3>🕒 Recent Signups</h3>
+        <table>
+          <thead>
+            <tr><th>Email</th><th>Role</th><th>Registered</th></tr>
+          </thead>
+          <tbody id="recentUsers"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="/dashboard/assets/dashboard.js?v=7"></script>
+  <script>
+  requireAuth();
+  setActiveNav('overview');
+
+  async function load() {
+    try {
+      const data = await API.get('/overview');
+
+      document.getElementById('statUsers').textContent = data.totalUsers;
+      document.getElementById('subUsers').textContent = '+' + data.usersLast7Days + ' in last 7 days';
+      document.getElementById('statTrees').textContent = data.totalTrees;
+      document.getElementById('subTrees').textContent = '+' + data.treesLast7Days + ' in last 7 days';
+      document.getElementById('statUsersWithTrees').textContent = data.usersWithTrees;
+
+      const rows = data.recentUsers.map((u) => `
+        <tr>
+          <td>${u.email}</td>
+          <td><span class="badge ${u.role === 'ADMIN' ? 'admin' : 'user'}">${u.role}</span></td>
+          <td>${new Date(u.createdAt).toLocaleString()}</td>
+        </tr>`).join('');
+      document.getElementById('recentUsers').innerHTML = rows;
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+
+      const [regs, trees] = await Promise.all([
+        API.get('/registrations?days=30'),
+        API.get('/trees?days=30'),
+      ]);
+      drawChart('chartUsers', regs.map(r => r.date.slice(5)), regs.map(r => r.count), '#22c55e');
+      drawChart('chartTrees', trees.map(t => t.date.slice(5)), trees.map(t => t.count), '#3b82f6');
+    } catch (ex) {
+      document.getElementById('loading').textContent = 'Failed to load data';
+    }
+  }
+
+  function drawChart(id, labels, values, color) {
+    const ctx = document.getElementById(id);
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{ data: values, borderColor: color, backgroundColor: color + '33', fill: true, tension: 0.4, pointRadius: 2 }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#94a3b8', maxTicksLimit: 8, maxRotation: 0, autoSkip: true }, grid: { color: '#1e293b' } },
+          y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#1e293b' } },
+        },
+      },
+    });
+    // Redraw after layout settles so it fits the container on small screens
+    setTimeout(() => chart.resize(), 100);
+    window.addEventListener('resize', () => chart.resize());
+    return chart;
+  }
+
+  load();
+  </script>
+</body>
+</html>
