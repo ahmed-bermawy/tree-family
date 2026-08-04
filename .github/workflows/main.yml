@@ -27,15 +27,14 @@ jobs:
         run: npm run build
 
       - name: Deploy via rsync
-        uses: burnett01/rsync-deployments@7.0.2
-        with:
-          switches: -avzr --delete --exclude=node_modules --exclude=.env --exclude=.git --exclude=uploads
-          path: ./*
-          remote_user: ${{ secrets.PROD_USER }}
-          remote_host: ${{ secrets.PROD_HOST }}
-          remote_port: ${{ secrets.PROD_PORT }}
-          remote_key: ${{ secrets.PROD_SSH_KEY }}
-          remote_path: ${{ secrets.PROD_API_PATH }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -avzr --delete \
+            --exclude=node_modules --exclude=.env --exclude=.git --exclude=uploads \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p ${{ secrets.PROD_PORT }}" \
+            ./ ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${{ secrets.PROD_API_PATH }}
 
       - name: Post-deploy (install & restart)
         uses: appleboy/ssh-action@v1.0.3
