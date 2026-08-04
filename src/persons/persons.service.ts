@@ -51,6 +51,57 @@ export class PersonsService {
 
   async remove(id: number, userId: number) {
     await this.findOne(id, userId);
-    return this.prisma.person.delete({ where: { id } });
+    const toDelete = await this.collectCascadeIds([id], userId);
+    await this.prisma.person.deleteMany({ where: { id: { in: toDelete } } });
+    return { deleted: toDelete.length, ids: toDelete };
+  }
+
+  // Batch delete for couple nodes — cascade deletes the whole branch
+  async removeBatch(ids: number[], userId: number) {
+    const persons = await this.prisma.person.findMany({
+      where: { id: { in: ids } },
+      include: { tree: true },
+    });
+    for (const p of persons) {
+      if (p.tree.userId !== userId) throw new ForbiddenException();
+    }
+    const toDelete = await this.collectCascadeIds(ids, userId);
+    await this.prisma.person.deleteMany({ where: { id: { in: toDelete } } });
+    return { deleted: toDelete.length, ids: toDelete };
+  }
+
+  // Returns the ids of a person + all descendants + their spouses
+  // (so no orphaned nodes remain after deletion). Never walks UP to parents.
+  private async collectCascadeIds(seedIds: number[], userId: number): Promise<number[]> {
+    const set = new Set<number>(seedIds);
+    const queue = [...seedIds];
+    while (queue.length) {
+      const current = queue.pop()!;
+      const rels = await this.prisma.relationship.findMany({
+        where: {
+          OR: [{ fromPersonId: current }, { toPersonId: current }],
+        },
+        select: { fromPersonId: true, toPersonId: true, type: true },
+      });
+      for (const r of rels) {
+        const other = r.fromPersonId === current ? r.toPersonId : r.fromPersonId;
+        if (set.has(other)) continue;
+        let include = false;
+        if (r.type === 'spouse') {
+          include = true; // keep couples whole
+        } else if (r.type === 'child') {
+          // stored as from=child, to=parent → cascade only when current IS the parent
+          include = r.toPersonId === current;
+        } else if (r.type === 'parent') {
+          // stored as from=parent, to=child → cascade only when current IS the parent
+          include = r.fromPersonId === current;
+        }
+        if (include) {
+          set.add(other);
+          queue.push(other);
+        }
+      }
+    }
+    return [...set];
   }
 }

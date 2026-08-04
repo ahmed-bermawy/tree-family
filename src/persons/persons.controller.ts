@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Body, Param, ParseIntPipe, UseGuards,
+  Body, Param, ParseIntPipe, UseGuards, BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -39,5 +39,13 @@ export class PersonsController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.personsService.remove(id, user.id);
+  }
+
+  @Post('batch-delete')
+  removeBatch(@Body() body: { ids: number[] }, @CurrentUser() user: any) {
+    if (!Array.isArray(body.ids) || body.ids.length === 0) {
+      throw new BadRequestException('ids array is required');
+    }
+    return this.personsService.removeBatch(body.ids, user.id);
   }
 }
